@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ReservationsService } from './reservations.service';
-import { Reservation } from './reservation.entity';
 import { Concert } from '../concerts/concert.entity';
 import { TransactionsModule } from '../transactions/transactions.module';
+import { Reservation } from './reservation.entity';
+import { ReservationsController } from './reservations.controller';
+import { ReservationsService } from './reservations.service';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
     TransactionsModule,
   ],
   providers: [ReservationsService],
+  controllers: [ReservationsController],
   exports: [ReservationsService],
 })
 export class ReservationsModule {}

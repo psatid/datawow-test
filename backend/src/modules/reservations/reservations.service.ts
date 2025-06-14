@@ -43,6 +43,10 @@ export class ReservationsService {
     }
 
     reservation.status = ReservationStatus.CONFIRMED;
+    await this.transactionsService.createReservationTransaction(
+      reservation.concert,
+      reservation.customerEmail,
+    );
     return await this.reservationRepository.save(reservation);
   }
 
@@ -126,19 +130,19 @@ export class ReservationsService {
       });
     }
 
+    if (reservation.status === ReservationStatus.CANCELLED) {
+      throw new BadRequestException({
+        code: 'RESERVATION_ALREADY_CANCELLED',
+        message: 'Reservation has already been cancelled',
+      });
+    }
+
     reservation.status = ReservationStatus.CANCELLED;
     await this.reservationRepository.save(reservation);
     await this.transactionsService.createCancellationTransaction(
       reservation.concert,
       customerEmail,
     );
-  }
-
-  async getReservationHistory(): Promise<Reservation[]> {
-    return await this.reservationRepository.find({
-      relations: ['concert'],
-      order: { createdAt: 'DESC' },
-    });
   }
 
   async getUserReservations(customerEmail: string): Promise<Reservation[]> {

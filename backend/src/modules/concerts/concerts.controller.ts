@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+} from '@nestjs/common';
 import { ConcertsService } from './concerts.service';
 import { CreateConcertDto } from './dto/create-concert.dto';
 import { Concert } from './concert.entity';
@@ -46,7 +54,7 @@ export class ConcertsController {
     );
   }
 
-  @Post(':concertId/cancel')
+  @Put(':concertId/cancel')
   async cancelReservation(
     @Param('concertId') concertId: string,
     @Body() cancelReservationDto: CancelReservationDto,
