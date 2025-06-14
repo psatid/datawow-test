@@ -50,6 +50,7 @@ export class ReservationsService {
     await queryRunner.startTransaction();
 
     try {
+      // Reactivate the reservation
       reservation.status = ReservationStatus.CONFIRMED;
       const savedReservation = await queryRunner.manager.save(reservation);
 
@@ -64,10 +65,10 @@ export class ReservationsService {
       return savedReservation;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error('Failed to reactivate reservation:', error);
       throw new InternalServerErrorException({
         code: 'RESERVATION_REACTIVATION_FAILED',
         message: 'Failed to reactivate reservation',
+        error,
       });
     } finally {
       await queryRunner.release();

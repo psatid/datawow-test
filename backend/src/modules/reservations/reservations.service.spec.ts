@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
@@ -201,6 +205,80 @@ describe('ReservationsService', () => {
         service.reserveSeat(concertId, customerEmail),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should rollback transaction when saving reservation fails', async () => {
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
+        mockConcert,
+      );
+      (mockReservationRepository.findOne as jest.Mock).mockResolvedValue(null);
+      const mockError = new Error('Database error');
+      (mockEntityManager.save as jest.Mock).mockRejectedValue(mockError);
+
+      await expect(
+        service.reserveSeat(concertId, customerEmail),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should rollback transaction when saving reservation for resrvation activation fails', async () => {
+      const mockExistingReservation = {
+        id: '1',
+        customerEmail,
+        concert: mockConcert,
+        status: ReservationStatus.CANCELLED,
+      };
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
+        mockConcert,
+      );
+      (mockReservationRepository.findOne as jest.Mock).mockResolvedValue(
+        mockExistingReservation,
+      );
+
+      const mockError = new Error('Database error');
+      (mockEntityManager.save as jest.Mock).mockRejectedValue(mockError);
+
+      await expect(
+        service.reserveSeat(concertId, customerEmail),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should rollback transaction when creating transaction record fails', async () => {
+      // Setup
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
+        mockConcert,
+      );
+      (mockReservationRepository.findOne as jest.Mock).mockResolvedValue(null);
+      const mockReservation = {
+        id: '1',
+        customerEmail,
+        concert: mockConcert,
+        status: ReservationStatus.CONFIRMED,
+      };
+      (mockEntityManager.save as jest.Mock).mockResolvedValue(mockReservation);
+      (
+        mockTransactionsService.createTransactionWithQueryRunner as jest.Mock
+      ).mockRejectedValue(new Error('Transaction creation failed'));
+
+      // Test
+      await expect(
+        service.reserveSeat(concertId, customerEmail),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      // Verify rollback was called
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+    });
   });
 
   describe('cancelReservation', () => {
@@ -262,6 +340,63 @@ describe('ReservationsService', () => {
       await expect(
         service.cancelReservation(concertId, customerEmail),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should rollback transaction when saving cancellation fails', async () => {
+      // Setup
+      const mockReservation = {
+        id: '1',
+        customerEmail,
+        concert: mockConcert,
+        status: ReservationStatus.CONFIRMED,
+      };
+      (mockReservationRepository.findOne as jest.Mock).mockResolvedValue(
+        mockReservation,
+      );
+      const mockError = new Error('Database error');
+      (mockEntityManager.save as jest.Mock).mockRejectedValue(mockError);
+
+      // Test
+      await expect(
+        service.cancelReservation(concertId, customerEmail),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      // Verify rollback was called
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should rollback transaction when creating cancellation transaction record fails', async () => {
+      // Setup
+      const mockReservation = {
+        id: '1',
+        customerEmail,
+        concert: mockConcert,
+        status: ReservationStatus.CONFIRMED,
+      };
+      (mockReservationRepository.findOne as jest.Mock).mockResolvedValue(
+        mockReservation,
+      );
+      (mockEntityManager.save as jest.Mock).mockResolvedValue({
+        ...mockReservation,
+        status: ReservationStatus.CANCELLED,
+      });
+      (
+        mockTransactionsService.createTransactionWithQueryRunner as jest.Mock
+      ).mockRejectedValue(new Error('Transaction creation failed'));
+
+      // Test
+      await expect(
+        service.cancelReservation(concertId, customerEmail),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      // Verify rollback was called
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
     });
   });
 
