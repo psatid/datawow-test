@@ -4,8 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConcertsModule } from './concerts/concerts.module';
+import { UsersModule } from './users/users.module';
 import databaseConfig from './config/database.config';
 import { Concert } from './concerts/concert.entity';
+import { Reservation } from './concerts/reservation.entity';
 
 @Module({
   imports: [
@@ -22,7 +24,7 @@ import { Concert } from './concerts/concert.entity';
         username: configService.get('database.username'),
         password: configService.get('database.password'),
         database: configService.get('database.database'),
-        entities: [Concert],
+        entities: [Concert, Reservation],
         synchronize: false, // Disabled for safety
         migrations: ['dist/migrations/*.js'],
         migrationsRun: true, // Automatically run migrations on startup
@@ -30,6 +32,7 @@ import { Concert } from './concerts/concert.entity';
       inject: [ConfigService],
     }),
     ConcertsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
