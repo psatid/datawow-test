@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Reservation } from './reservation.entity';
-import { Transaction } from './transaction.entity';
+import { Reservation } from '../reservations/reservation.entity';
+import { Transaction } from '../transactions/transaction.entity';
 
 @Entity()
 export class Concert {

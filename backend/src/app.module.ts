@@ -3,12 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConcertsModule } from './concerts/concerts.module';
-import { UsersModule } from './users/users.module';
 import databaseConfig from './config/database.config';
-import { Concert } from './concerts/concert.entity';
-import { Reservation } from './concerts/reservation.entity';
-import { Transaction } from './concerts/transaction.entity';
+import { Concert } from './modules/concerts/concert.entity';
+import { ConcertsModule } from './modules/concerts/concerts.module';
+import { Reservation } from './modules/reservations/reservation.entity';
+import { ReservationsModule } from './modules/reservations/reservations.module';
+import { Transaction } from './modules/transactions/transaction.entity';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -26,14 +27,15 @@ import { Transaction } from './concerts/transaction.entity';
         password: configService.get('database.password'),
         database: configService.get('database.database'),
         entities: [Concert, Reservation, Transaction],
-        synchronize: false, // Disabled for safety
+        synchronize: false,
         migrations: ['dist/migrations/*.js'],
-        migrationsRun: true, // Automatically run migrations on startup
+        migrationsRun: true,
       }),
       inject: [ConfigService],
     }),
     ConcertsModule,
-    UsersModule,
+    ReservationsModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

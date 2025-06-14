@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { Concert } from './concert.entity';
+import { Concert } from '../concerts/concert.entity';
 
 export enum TransactionType {
   RESERVATION_CREATED = 'reservation_created',

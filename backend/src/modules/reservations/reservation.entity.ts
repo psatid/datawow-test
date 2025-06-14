@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { Concert } from './concert.entity';
+import { Concert } from '../concerts/concert.entity';
 
 export enum ReservationStatus {
   CONFIRMED = 'confirmed',

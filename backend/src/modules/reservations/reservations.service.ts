@@ -5,68 +5,19 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Concert } from './concert.entity';
+import { Concert } from '../concerts/concert.entity';
 import { Reservation, ReservationStatus } from './reservation.entity';
-import { Transaction, TransactionType } from './transaction.entity';
-import { CreateConcertDto } from './dto/create-concert.dto';
+import { TransactionsService } from '../transactions/transactions.service';
 
 @Injectable()
-export class ConcertsService {
+export class ReservationsService {
   constructor(
-    @InjectRepository(Concert)
-    private concertRepository: Repository<Concert>,
     @InjectRepository(Reservation)
     private reservationRepository: Repository<Reservation>,
-    @InjectRepository(Transaction)
-    private transactionRepository: Repository<Transaction>,
+    @InjectRepository(Concert)
+    private concertRepository: Repository<Concert>,
+    private transactionsService: TransactionsService,
   ) {}
-
-  async createConcert(createConcertDto: CreateConcertDto): Promise<Concert> {
-    const concert = this.concertRepository.create(createConcertDto);
-    return await this.concertRepository.save(concert);
-  }
-
-  async getAllConcerts(): Promise<Concert[]> {
-    return await this.concertRepository.find({
-      relations: ['reservations'],
-    });
-  }
-
-  async getConcert(id: string): Promise<Concert> {
-    const concert = await this.concertRepository.findOne({
-      where: { id },
-      relations: ['reservations'],
-    });
-    if (!concert) {
-      throw new NotFoundException('Concert not found');
-    }
-    return concert;
-  }
-
-  async deleteConcert(id: string): Promise<void> {
-    const result = await this.concertRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException('Concert not found');
-    }
-  }
-
-  async reserveSeat(
-    concertId: string,
-    customerEmail: string,
-  ): Promise<Reservation> {
-    const concert = await this.getConcert(concertId);
-    const existingReservation = await this.findExistingReservation(
-      concertId,
-      customerEmail,
-    );
-
-    if (existingReservation) {
-      return this.handleExistingReservation(existingReservation);
-    }
-
-    this.validateAvailableSeats(concert);
-    return this.createNewReservation(concert, customerEmail);
-  }
 
   private async findExistingReservation(
     concertId: string,
@@ -77,6 +28,7 @@ export class ConcertsService {
         concert: { id: concertId },
         customerEmail,
       },
+      relations: ['concert'],
     });
   }
 
@@ -95,9 +47,7 @@ export class ConcertsService {
   }
 
   private validateAvailableSeats(concert: Concert): void {
-    const activeReservations = concert.reservations.filter(
-      (r) => r.status === ReservationStatus.CONFIRMED,
-    ).length;
+    const activeReservations = this.countActiveReservations(concert);
     if (activeReservations >= concert.seats) {
       throw new BadRequestException({
         code: 'NO_SEATS_AVAILABLE',
@@ -106,20 +56,13 @@ export class ConcertsService {
     }
   }
 
-  private async createTransaction(
-    concert: Concert,
-    customerEmail: string,
-    type: TransactionType,
-  ): Promise<void> {
-    const transaction = this.transactionRepository.create({
-      type,
-      concert,
-      customerEmail,
-    });
-    await this.transactionRepository.save(transaction);
+  private countActiveReservations(concert: Concert): number {
+    return concert.reservations.filter(
+      (r) => r.status === ReservationStatus.CONFIRMED,
+    ).length;
   }
 
-  private async createNewReservation(
+  private async createReservation(
     concert: Concert,
     customerEmail: string,
   ): Promise<Reservation> {
@@ -130,13 +73,41 @@ export class ConcertsService {
     });
 
     const savedReservation = await this.reservationRepository.save(reservation);
-    await this.createTransaction(
+    await this.transactionsService.createReservationTransaction(
       concert,
       customerEmail,
-      TransactionType.RESERVATION_CREATED,
     );
 
     return savedReservation;
+  }
+
+  async reserveSeat(
+    concertId: string,
+    customerEmail: string,
+  ): Promise<Reservation> {
+    const concert = await this.concertRepository.findOne({
+      where: { id: concertId },
+      relations: ['reservations'],
+    });
+
+    if (!concert) {
+      throw new NotFoundException({
+        code: 'CONCERT_NOT_FOUND',
+        message: 'Concert not found',
+      });
+    }
+
+    const existingReservation = await this.findExistingReservation(
+      concertId,
+      customerEmail,
+    );
+
+    if (existingReservation) {
+      return this.handleExistingReservation(existingReservation);
+    }
+
+    this.validateAvailableSeats(concert);
+    return this.createReservation(concert, customerEmail);
   }
 
   async cancelReservation(
@@ -149,20 +120,30 @@ export class ConcertsService {
     });
 
     if (!reservation) {
-      throw new NotFoundException('Reservation not found');
+      throw new NotFoundException({
+        code: 'RESERVATION_NOT_FOUND',
+        message: 'Reservation not found for this concert',
+      });
     }
 
     reservation.status = ReservationStatus.CANCELLED;
     await this.reservationRepository.save(reservation);
-    await this.createTransaction(
+    await this.transactionsService.createCancellationTransaction(
       reservation.concert,
       customerEmail,
-      TransactionType.RESERVATION_CANCELLED,
     );
   }
 
   async getReservationHistory(): Promise<Reservation[]> {
     return await this.reservationRepository.find({
+      relations: ['concert'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async getUserReservations(customerEmail: string): Promise<Reservation[]> {
+    return await this.reservationRepository.find({
+      where: { customerEmail },
       relations: ['concert'],
       order: { createdAt: 'DESC' },
     });

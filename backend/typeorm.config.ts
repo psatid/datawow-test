@@ -1,9 +1,9 @@
+import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { config } from 'dotenv';
-import { DataSource } from 'typeorm';
-import { Concert } from './src/concerts/concert.entity';
-import { Reservation } from './src/concerts/reservation.entity';
-import { Transaction } from './src/concerts/transaction.entity';
+import { Concert } from './src/modules/concerts/concert.entity';
+import { Reservation } from './src/modules/reservations/reservation.entity';
+import { Transaction } from './src/modules/transactions/transaction.entity';
 
 config();
 

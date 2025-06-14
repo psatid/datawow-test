@@ -1,16 +1,20 @@
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { ConcertsService } from './concerts.service';
 import { CreateConcertDto } from './dto/create-concert.dto';
+import { Concert } from './concert.entity';
+import { ReservationsService } from '../reservations/reservations.service';
 import {
   CreateReservationDto,
   CancelReservationDto,
-} from './dto/create-reservation.dto';
-import { Concert } from './concert.entity';
-import { Reservation } from './reservation.entity';
+} from '../reservations/dto/reservation.dto';
+import { Reservation } from '../reservations/reservation.entity';
 
 @Controller('concerts')
 export class ConcertsController {
-  constructor(private readonly concertsService: ConcertsService) {}
+  constructor(
+    private readonly concertsService: ConcertsService,
+    private readonly reservationsService: ReservationsService,
+  ) {}
 
   // Admin endpoints
   @Post()
@@ -36,7 +40,7 @@ export class ConcertsController {
     @Param('concertId') concertId: string,
     @Body() createReservationDto: CreateReservationDto,
   ): Promise<Reservation> {
-    return this.concertsService.reserveSeat(
+    return this.reservationsService.reserveSeat(
       concertId,
       createReservationDto.customerEmail,
     );
@@ -47,7 +51,7 @@ export class ConcertsController {
     @Param('concertId') concertId: string,
     @Body() cancelReservationDto: CancelReservationDto,
   ): Promise<void> {
-    return this.concertsService.cancelReservation(
+    return this.reservationsService.cancelReservation(
       concertId,
       cancelReservationDto.customerEmail,
     );
