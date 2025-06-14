@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryRunner } from 'typeorm';
 import { Transaction, TransactionType } from './transaction.entity';
 import { Concert } from '../concerts/concert.entity';
 
@@ -40,5 +40,19 @@ export class TransactionsService {
       relations: ['concert'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async createTransactionWithQueryRunner(
+    queryRunner: QueryRunner,
+    concert: Concert,
+    customerEmail: string,
+    type: TransactionType,
+  ): Promise<void> {
+    const transaction = this.transactionRepository.create({
+      type,
+      concert,
+      customerEmail,
+    });
+    await queryRunner.manager.save(transaction);
   }
 }

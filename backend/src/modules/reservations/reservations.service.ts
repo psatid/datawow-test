@@ -2,12 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Concert } from '../concerts/concert.entity';
 import { Reservation, ReservationStatus } from './reservation.entity';
 import { TransactionsService } from '../transactions/transactions.service';
+import { TransactionType } from '../transactions/transaction.entity';
 
 @Injectable()
 export class ReservationsService {
@@ -17,6 +19,7 @@ export class ReservationsService {
     @InjectRepository(Concert)
     private concertRepository: Repository<Concert>,
     private transactionsService: TransactionsService,
+    private dataSource: DataSource,
   ) {}
 
   private async findExistingReservation(
@@ -42,16 +45,39 @@ export class ReservationsService {
       });
     }
 
-    reservation.status = ReservationStatus.CONFIRMED;
-    await this.transactionsService.createReservationTransaction(
-      reservation.concert,
-      reservation.customerEmail,
-    );
-    return await this.reservationRepository.save(reservation);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      reservation.status = ReservationStatus.CONFIRMED;
+      const savedReservation = await queryRunner.manager.save(reservation);
+
+      await this.transactionsService.createTransactionWithQueryRunner(
+        queryRunner,
+        reservation.concert,
+        reservation.customerEmail,
+        TransactionType.RESERVATION_CREATED,
+      );
+
+      await queryRunner.commitTransaction();
+      return savedReservation;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.error('Failed to reactivate reservation:', error);
+      throw new InternalServerErrorException({
+        code: 'RESERVATION_REACTIVATION_FAILED',
+        message: 'Failed to reactivate reservation',
+      });
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private validateAvailableSeats(concert: Concert): void {
-    const activeReservations = this.countActiveReservations(concert);
+    const activeReservations = concert.reservations.filter(
+      (r) => r.status === ReservationStatus.CONFIRMED,
+    ).length;
     if (activeReservations >= concert.seats) {
       throw new BadRequestException({
         code: 'NO_SEATS_AVAILABLE',
@@ -60,29 +86,41 @@ export class ReservationsService {
     }
   }
 
-  private countActiveReservations(concert: Concert): number {
-    return concert.reservations.filter(
-      (r) => r.status === ReservationStatus.CONFIRMED,
-    ).length;
-  }
-
   private async createReservation(
     concert: Concert,
     customerEmail: string,
   ): Promise<Reservation> {
-    const reservation = this.reservationRepository.create({
-      customerEmail,
-      concert,
-      status: ReservationStatus.CONFIRMED,
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const savedReservation = await this.reservationRepository.save(reservation);
-    await this.transactionsService.createReservationTransaction(
-      concert,
-      customerEmail,
-    );
+    try {
+      const reservation = this.reservationRepository.create({
+        customerEmail,
+        concert,
+        status: ReservationStatus.CONFIRMED,
+      });
 
-    return savedReservation;
+      const savedReservation = await queryRunner.manager.save(reservation);
+      await this.transactionsService.createTransactionWithQueryRunner(
+        queryRunner,
+        concert,
+        customerEmail,
+        TransactionType.RESERVATION_CREATED,
+      );
+
+      await queryRunner.commitTransaction();
+      return savedReservation;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException({
+        code: 'RESERVATION_CREATION_FAILED',
+        message: 'Failed to create reservation',
+        error,
+      });
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async reserveSeat(
@@ -114,10 +152,10 @@ export class ReservationsService {
     return this.createReservation(concert, customerEmail);
   }
 
-  async cancelReservation(
+  private async validateCancellationRequest(
     concertId: string,
     customerEmail: string,
-  ): Promise<void> {
+  ): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
       where: { concert: { id: concertId }, customerEmail },
       relations: ['concert'],
@@ -132,17 +170,49 @@ export class ReservationsService {
 
     if (reservation.status === ReservationStatus.CANCELLED) {
       throw new BadRequestException({
-        code: 'RESERVATION_ALREADY_CANCELLED',
-        message: 'Reservation has already been cancelled',
+        code: 'RESERVATION_NOT_CONFIRMED',
+        message: 'Only confirmed reservations can be cancelled',
       });
     }
 
-    reservation.status = ReservationStatus.CANCELLED;
-    await this.reservationRepository.save(reservation);
-    await this.transactionsService.createCancellationTransaction(
-      reservation.concert,
+    return reservation;
+  }
+
+  async cancelReservation(
+    concertId: string,
+    customerEmail: string,
+  ): Promise<void> {
+    const reservation = await this.validateCancellationRequest(
+      concertId,
       customerEmail,
     );
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      reservation.status = ReservationStatus.CANCELLED;
+      await queryRunner.manager.save(reservation);
+
+      await this.transactionsService.createTransactionWithQueryRunner(
+        queryRunner,
+        reservation.concert,
+        customerEmail,
+        TransactionType.RESERVATION_CANCELLED,
+      );
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException({
+        code: 'RESERVATION_CANCELLATION_FAILED',
+        message: 'Failed to cancel reservation',
+        error,
+      });
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getUserReservations(customerEmail: string): Promise<Reservation[]> {
