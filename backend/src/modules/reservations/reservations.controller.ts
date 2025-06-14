@@ -11,7 +11,10 @@ export class ReservationsController {
     @Query('email') email: string,
   ): Promise<Reservation[]> {
     if (!email) {
-      throw new BadRequestException('Email is required');
+      throw new BadRequestException({
+        code: 'EMAIL_NOT_PROVIDED',
+        message: 'Email query parameter is required.',
+      });
     }
     return this.reservationsService.getUserReservations(email);
   }
