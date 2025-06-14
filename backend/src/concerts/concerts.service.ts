@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Concert } from './concert.entity';
 import { Reservation, ReservationStatus } from './reservation.entity';
+import { Transaction, TransactionType } from './transaction.entity';
 import { CreateConcertDto } from './dto/create-concert.dto';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class ConcertsService {
     private concertRepository: Repository<Concert>,
     @InjectRepository(Reservation)
     private reservationRepository: Repository<Reservation>,
+    @InjectRepository(Transaction)
+    private transactionRepository: Repository<Transaction>,
   ) {}
 
   async createConcert(createConcertDto: CreateConcertDto): Promise<Concert> {
@@ -52,42 +55,88 @@ export class ConcertsService {
     customerEmail: string,
   ): Promise<Reservation> {
     const concert = await this.getConcert(concertId);
+    const existingReservation = await this.findExistingReservation(
+      concertId,
+      customerEmail,
+    );
 
-    // Check if user already has an active reservation for this concert
-    const existingReservation = await this.reservationRepository.findOne({
+    if (existingReservation) {
+      return this.handleExistingReservation(existingReservation);
+    }
+
+    this.validateAvailableSeats(concert);
+    return this.createNewReservation(concert, customerEmail);
+  }
+
+  private async findExistingReservation(
+    concertId: string,
+    customerEmail: string,
+  ): Promise<Reservation | null> {
+    return await this.reservationRepository.findOne({
       where: {
         concert: { id: concertId },
         customerEmail,
       },
     });
+  }
 
-    if (existingReservation) {
-      if (existingReservation.status === ReservationStatus.CONFIRMED) {
-        throw new BadRequestException(
-          'User already has an active reservation for this concert',
-        );
-      } else if (existingReservation.status === ReservationStatus.CANCELLED) {
-        existingReservation.status = ReservationStatus.CONFIRMED;
-        return await this.reservationRepository.save(existingReservation);
-      }
+  private async handleExistingReservation(
+    reservation: Reservation,
+  ): Promise<Reservation> {
+    if (reservation.status === ReservationStatus.CONFIRMED) {
+      throw new BadRequestException({
+        code: 'RESERVATION_ALREADY_CONFIRMED',
+        message: 'You already have a confirmed reservation for this concert',
+      });
     }
 
-    // Check available seats
+    reservation.status = ReservationStatus.CONFIRMED;
+    return await this.reservationRepository.save(reservation);
+  }
+
+  private validateAvailableSeats(concert: Concert): void {
     const activeReservations = concert.reservations.filter(
       (r) => r.status === ReservationStatus.CONFIRMED,
     ).length;
-
     if (activeReservations >= concert.seats) {
-      throw new BadRequestException('No seats available');
+      throw new BadRequestException({
+        code: 'NO_SEATS_AVAILABLE',
+        message: 'No seats available for this concert',
+      });
     }
+  }
 
+  private async createTransaction(
+    concert: Concert,
+    customerEmail: string,
+    type: TransactionType,
+  ): Promise<void> {
+    const transaction = this.transactionRepository.create({
+      type,
+      concert,
+      customerEmail,
+    });
+    await this.transactionRepository.save(transaction);
+  }
+
+  private async createNewReservation(
+    concert: Concert,
+    customerEmail: string,
+  ): Promise<Reservation> {
     const reservation = this.reservationRepository.create({
       customerEmail,
       concert,
       status: ReservationStatus.CONFIRMED,
     });
 
-    return await this.reservationRepository.save(reservation);
+    const savedReservation = await this.reservationRepository.save(reservation);
+    await this.createTransaction(
+      concert,
+      customerEmail,
+      TransactionType.RESERVATION_CREATED,
+    );
+
+    return savedReservation;
   }
 
   async cancelReservation(
@@ -105,6 +154,11 @@ export class ConcertsService {
 
     reservation.status = ReservationStatus.CANCELLED;
     await this.reservationRepository.save(reservation);
+    await this.createTransaction(
+      reservation.concert,
+      customerEmail,
+      TransactionType.RESERVATION_CANCELLED,
+    );
   }
 
   async getReservationHistory(): Promise<Reservation[]> {

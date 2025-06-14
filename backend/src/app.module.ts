@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import databaseConfig from './config/database.config';
 import { Concert } from './concerts/concert.entity';
 import { Reservation } from './concerts/reservation.entity';
+import { Transaction } from './concerts/transaction.entity';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { Reservation } from './concerts/reservation.entity';
         username: configService.get('database.username'),
         password: configService.get('database.password'),
         database: configService.get('database.database'),
-        entities: [Concert, Reservation],
+        entities: [Concert, Reservation, Transaction],
         synchronize: false, // Disabled for safety
         migrations: ['dist/migrations/*.js'],
         migrationsRun: true, // Automatically run migrations on startup

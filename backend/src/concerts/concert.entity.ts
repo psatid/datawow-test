@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Reservation } from './reservation.entity';
+import { Transaction } from './transaction.entity';
 
 @Entity()
 export class Concert {
@@ -30,4 +31,7 @@ export class Concert {
 
   @OneToMany(() => Reservation, (reservation) => reservation.concert)
   reservations: Reservation[];
+
+  @OneToMany(() => Transaction, (transaction) => transaction.concert)
+  transactions: Transaction[];
 }
