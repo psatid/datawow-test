@@ -19,7 +19,7 @@ export const ConcertStats = () => {
       <ConcertStatCard
         variant="error"
         Icon={XCircle}
-        label="Cance;"
+        label="Cancel"
         value={134}
       />
     </div>
