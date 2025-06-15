@@ -7,8 +7,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-white bg-[#E84E4E]",
-        outline: "border border-[#C4C4C4]",
+        default: "text-white bg-red",
+        outline: "border border-border",
       },
     },
     defaultVariants: {

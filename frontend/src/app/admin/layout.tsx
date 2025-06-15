@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar, TSidebarItem } from "@/modules/common/components";
-import { History, Home, User } from "lucide-react";
+import { History, Home, RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLayout({
@@ -24,9 +24,19 @@ export default function AdminLayout({
     },
     {
       label: "Switch to user",
-      Icon: User,
+      Icon: RefreshCcw,
       onClick: () => {
         const email = prompt("Enter your email to switch to user mode:");
+        if (email === null || email.trim() === "") {
+          alert("Email cannot be empty.");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          alert("Please enter a valid email address.");
+          return;
+        }
         localStorage.setItem("userEmail", email || "");
         router.push("/user");
       },

@@ -8,6 +8,7 @@ type GetConcertsResponse = {
     name: string;
     description: string;
     seats: number;
+    availableSeats: number;
   }[];
   totalSeats: number;
   totalConfirmedReservations: number;
@@ -33,14 +34,20 @@ export const deleteConcert = async (concertId: string) => {
   return await axios.delete(`${CONCERT_API_BASE_URL}/${concertId}`);
 };
 
-export const reserveSeats = async (concertId: string, email: string) => {
+export const reserveSeats = async (
+  concertId: string,
+  customerEmail: string
+) => {
   return await axios.post(`${CONCERT_API_BASE_URL}/${concertId}/reserve`, {
-    email,
+    customerEmail,
   });
 };
 
-export const cancelReservation = async (concertId: string, email: string) => {
+export const cancelReservation = async (
+  concertId: string,
+  customerEmail: string
+) => {
   return await axios.put(`${CONCERT_API_BASE_URL}/${concertId}/cancel`, {
-    email,
+    customerEmail,
   });
 };

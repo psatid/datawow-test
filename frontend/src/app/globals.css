@@ -5,12 +5,14 @@
   --foreground: #171717;
   --border: #C2C2C2;
   --blue: #1692EC;
+  --red: #E84E4E;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-blue: var(--blue);
+  --color-red: var(--red);
   --color-border: var(--border);
   --font-robot: var(--font-robot);
   --font-roboto-mono: var(--font-roboto-mono);

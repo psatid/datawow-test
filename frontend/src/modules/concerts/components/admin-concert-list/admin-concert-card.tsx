@@ -24,8 +24,8 @@ export const AdminConcertCard = ({
 
   return (
     <>
-      <div className="bg-white p-6 rounded-lg border border-[#C2C2C2]">
-        <h3 className="text-3xl font-semibold text-[#1692EC]">{concertName}</h3>
+      <div className="bg-white p-6 rounded-lg border border-border">
+        <h3 className="text-3xl font-semibold text-blue">{concertName}</h3>
         <div className="w-full h-[1px] bg-[#C2C2C2] mt-6" />
 
         <p className="text-black text-lg mt-6">{description}</p>

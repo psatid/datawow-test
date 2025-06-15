@@ -11,6 +11,11 @@ export const mapConcertEntityToGetConcertResponseDto = (
       name: concert.name,
       description: concert.description,
       seats: concert.seats,
+      availableSeats:
+        concert.seats -
+        (concert.reservations?.filter(
+          (reservation) => reservation.status === ReservationStatus.CONFIRMED,
+        ).length || 0),
     })),
     totalSeats: concerts.reduce((total, concert) => total + concert.seats, 0),
     totalConfirmedReservations: concerts.reduce(

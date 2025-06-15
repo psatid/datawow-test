@@ -2,11 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { CONCERT_QUERY_KEY } from "./concert-constants";
 import {
+  cancelReservation,
   createConcert,
   CreateConcertRequest,
   deleteConcert,
   getConcerts,
+  reserveSeats,
 } from "./concert-services";
+import { getUserReservations } from "./reservation-services";
+
+const getUserEmail = () => {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("userEmail") || "";
+};
 
 export const useGetConcerts = () => {
   return useQuery({
@@ -71,6 +79,71 @@ export const useDeleteConcert = ({
       }
 
       alert(`Error deleting concert: ${error.message}`);
+    },
+  });
+};
+
+export const useGetUserConcertsList = () => {
+  const email = getUserEmail();
+  return useQuery({
+    queryKey: [CONCERT_QUERY_KEY.GET_USER_CONCERTS, email],
+    queryFn: async () => {
+      const response = await getConcerts();
+      const userReservaton = await getUserReservations(email);
+      return response.concerts.map((concert) => ({
+        ...concert,
+        isReserved: userReservaton.some(
+          (reservation) =>
+            reservation.concertId === concert.id &&
+            reservation.status === "confirmed"
+        ),
+      }));
+    },
+    enabled: !!email,
+  });
+};
+
+export const useReserveConcert = (concertId: string) => {
+  const email = getUserEmail();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      return await reserveSeats(concertId, email);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [CONCERT_QUERY_KEY.GET_USER_CONCERTS, email],
+      });
+    },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        const errorResponse = error.response;
+        if (errorResponse?.data.code === "NO_SEATS_AVAILABLE") {
+          alert("Concert is fully booked.");
+          return;
+        }
+      }
+      alert(`Error reserving concert: ${error.message}`);
+    },
+  });
+};
+
+export const useCancelConcertReservation = (concertId: string) => {
+  const email = getUserEmail();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      return await cancelReservation(concertId, email);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [CONCERT_QUERY_KEY.GET_USER_CONCERTS, email],
+      });
+    },
+    onError: (error) => {
+      alert(`Error cancelling reservation: ${error.message}`);
     },
   });
 };

@@ -1,10 +1,10 @@
 import { Sidebar, TSidebarItem } from "@/modules/common/components";
-import { User } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 
 const SIDEBAR_ITEMS: TSidebarItem[] = [
   {
     label: "Switch to admin",
-    Icon: User,
+    Icon: RefreshCcw,
     href: "/admin/home",
   },
 ];

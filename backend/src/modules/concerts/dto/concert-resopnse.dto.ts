@@ -3,6 +3,7 @@ type ConcertResponseDto = {
   name: string;
   description: string;
   seats: number;
+  availableSeats: number;
 };
 
 export class GetConcertResponseDto {
@@ -10,12 +11,4 @@ export class GetConcertResponseDto {
   totalSeats: number;
   totalConfirmedReservations: number;
   totalCancelledReservations: number;
-}
-
-export class UserConcertResponseDto {
-  id: string;
-  name: string;
-  description: string;
-  availableSeats: number;
-  isReserved: boolean;
 }
