@@ -1,4 +1,4 @@
-.PHONY: help setup check-nvm check-corepack install-node install-pnpm install-deps create-env docker-up migrate start stop clean
+.PHONY: help setup check-nvm check-corepack install-node install-pnpm install-deps create-env dev build clean lint
 
 # Environment
 SHELL := /bin/bash
@@ -11,7 +11,7 @@ NODE_VERSION := 22
 NVM_DIR := $(shell echo $$HOME/.nvm)
 NVM_SCRIPT := $(NVM_DIR)/nvm.sh
 
-# Colors (using ANSI escape sequences)
+# Colors
 GREEN := $(shell printf '\033[32m')
 RED := $(shell printf '\033[31m')
 YELLOW := $(shell printf '\033[33m')
@@ -24,7 +24,7 @@ CHECK = $(GREEN)✓$(NC)
 CROSS = $(RED)✗$(NC)
 
 help: ## Show this help message
-	@printf "Concert Booking System Backend Development Setup\n\n"
+	@printf "Concert Booking System Frontend Development Setup\n\n"
 	@printf "Usage:\n"
 	@printf "  make $(CYAN)<target>$(NC)\n\n"
 	@printf "Targets:\n"
@@ -74,23 +74,7 @@ create-env: ## Create .env file if it doesn't exist
 		echo "$(GREEN)✓ Created .env file$(NC)"; \
 	fi
 
-docker-up: ## Start Docker containers
-	@echo "$(BLUE)Starting database container...$(NC)"
-	@docker compose up -d
-	@echo "$(GREEN)✓ Database container started$(NC)"
-	@echo "$(BLUE)Waiting for PostgreSQL to be ready...$(NC)"
-	@until docker exec datawow_postgres pg_isready > /dev/null 2>&1; do \
-		echo "Waiting for database..."; \
-		sleep 2; \
-	done
-	@echo "$(GREEN)✓ Database is ready$(NC)"
-
-migrate: ## Run database migrations
-	@echo "$(BLUE)Running database migrations...$(NC)"
-	@pnpm run migration:run
-	@echo "$(GREEN)✓ Migrations completed$(NC)"
-
-setup: install-node install-pnpm create-env install-deps docker-up migrate ## Setup complete development environment
+setup: install-node install-pnpm create-env install-deps ## Setup complete development environment
 	@printf "\n$(GREEN)✅ Development environment setup complete!$(NC)\n"
 
 .DEFAULT_GOAL := help
