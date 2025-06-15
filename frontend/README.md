@@ -7,14 +7,14 @@ This is a concert booking system frontend built with Next.js. It provides a user
 ## Tech Stack
 
 - **Framework**: [Next.js](https://nextjs.org/) 15.3 - React Framework
-- **Language**: TypeScript
-- **State Management**: TanStack Query (React Query)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **State Management**: [TanStack Query](https://tanstack.com/query/latest) (React Query)
 - **UI Libraries**:
-  - Tailwind CSS - Utility-first CSS framework
-  - Lucide React - Icons
-  - clsx & tailwind-merge - CSS class management
-- **HTTP Client**: Axios
-- **Package Manager**: pnpm
+  - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+  - [Lucide React](https://lucide.dev/guide/packages/lucide-react) - Icons
+  - [clsx](https://github.com/lukeed/clsx) & [tailwind-merge](https://github.com/dcastil/tailwind-merge) - CSS class management
+- **HTTP Client**: [Axios](https://axios-http.com/)
+- **Package Manager**: [pnpm](https://pnpm.io/)
 
 ## Project Structure
 

@@ -5,16 +5,16 @@ This is a concert booking system backend built with NestJS. It provides APIs for
 ## Tech Stack
 
 - **Framework**: [NestJS](https://nestjs.com/) v11 - A progressive Node.js framework
-- **Database**: PostgreSQL with TypeORM for database management
-- **API Documentation**: Swagger/OpenAPI
-- **Language**: TypeScript
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [TypeORM](https://typeorm.io/) for database management
+- **API Documentation**: [Swagger/OpenAPI](https://swagger.io/specification/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Key Dependencies**:
-  - `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express` - Core NestJS packages
-  - `@nestjs/typeorm` - TypeORM integration for database management
-  - `@nestjs/swagger` - API documentation
-  - `@nestjs/config` - Configuration management
-  - `class-validator`, `class-transformer` - Data validation and transformation
-  - `pg` - PostgreSQL client
+  - [`@nestjs/common`](https://docs.nestjs.com/), [`@nestjs/core`](https://docs.nestjs.com/), [`@nestjs/platform-express`](https://docs.nestjs.com/techniques/mvc) - Core NestJS packages
+  - [`@nestjs/typeorm`](https://docs.nestjs.com/recipes/sql-typeorm) - TypeORM integration for database management
+  - [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) - API documentation
+  - [`@nestjs/config`](https://docs.nestjs.com/techniques/configuration) - Configuration management
+  - [`class-validator`](https://github.com/typestack/class-validator), [`class-transformer`](https://github.com/typestack/class-transformer) - Data validation and transformation
+  - [`pg`](https://node-postgres.com/) - PostgreSQL client
 
 ## Project Structure
 
