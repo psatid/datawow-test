@@ -1,8 +1,10 @@
 import { Button, Modal } from "@/modules/common/components";
 import { Trash2, User, X } from "lucide-react";
 import { useState } from "react";
+import { useDeleteConcert } from "../../concert-hooks";
 
 interface AdminConcertCardProps {
+  concertId: string;
   concertName: string;
   description: string;
   seats: number;
@@ -10,12 +12,15 @@ interface AdminConcertCardProps {
 }
 
 export const AdminConcertCard = ({
+  concertId,
   concertName,
   description,
   seats,
-}: //   onDelete,
-AdminConcertCardProps) => {
+}: AdminConcertCardProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const { mutate: deleteConcert, isPending: isDeletingConcert } =
+    useDeleteConcert({ onSuccess: () => setIsDeleteModalOpen(false) });
 
   return (
     <>
@@ -57,13 +62,15 @@ AdminConcertCardProps) => {
               variant="outline"
               className="flex-1"
               onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeletingConcert}
             >
               Cancel
             </Button>
             <Button
+              isLoading={isDeletingConcert}
               className="flex-1"
               onClick={() => {
-                setIsDeleteModalOpen(false);
+                deleteConcert(concertId);
               }}
             >
               Yes, Delete

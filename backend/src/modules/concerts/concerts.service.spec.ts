@@ -103,40 +103,6 @@ describe('ConcertsService', () => {
     });
   });
 
-  describe('getConcert', () => {
-    const concertId = '1';
-
-    it('should return a concert if it exists', async () => {
-      const mockConcert = {
-        id: concertId,
-        name: 'Test Concert',
-        description: 'A test concert',
-        seats: 100,
-        reservations: [],
-      };
-
-      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
-        mockConcert,
-      );
-
-      const result = await service.getConcert(concertId);
-
-      expect(result).toBe(mockConcert);
-      expect(mockConcertRepository.findOne).toHaveBeenCalledWith({
-        where: { id: concertId },
-        relations: ['reservations'],
-      });
-    });
-
-    it('should throw NotFoundException when concert does not exist', async () => {
-      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(null);
-
-      await expect(service.getConcert(concertId)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
   describe('deleteConcert', () => {
     const concertId = '1';
 

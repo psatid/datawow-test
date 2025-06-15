@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import { QueryClientProvider } from "./queryclient-provider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -26,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable} ${robotoMono.variable} antialiased`}>
-        {children}
+        <QueryClientProvider>{children}</QueryClientProvider>
       </body>
     </html>
   );

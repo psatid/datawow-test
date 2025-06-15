@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Concert } from './concert.entity';
@@ -22,18 +26,26 @@ export class ConcertsService {
     });
   }
 
-  async getConcert(id: string): Promise<Concert> {
+  async deleteConcert(id: string): Promise<void> {
     const concert = await this.concertRepository.findOne({
       where: { id },
       relations: ['reservations'],
     });
-    if (!concert) {
-      throw new NotFoundException('Concert not found');
-    }
-    return concert;
-  }
 
-  async deleteConcert(id: string): Promise<void> {
+    if (!concert) {
+      throw new NotFoundException({
+        code: 'CONCERT_NOT_FOUND',
+        message: 'Concert not found',
+      });
+    }
+
+    if (concert.reservations && concert.reservations.length > 0) {
+      throw new BadRequestException({
+        code: 'CONCERT_HAS_RESERVATIONS',
+        message: 'Cannot delete concert with existing reservations',
+      });
+    }
+
     const result = await this.concertRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException('Concert not found');

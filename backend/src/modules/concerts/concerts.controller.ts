@@ -23,6 +23,7 @@ import {
   CancelReservationDto,
 } from '../reservations/dto/reservation.dto';
 import { Reservation } from '../reservations/reservation.entity';
+import { ConcertResopnseDto } from './dto/concert-resopnse.dto';
 
 @ApiTags('Concerts')
 @Controller('concerts')
@@ -74,8 +75,14 @@ export class ConcertsController {
     description: 'List of concerts retrieved successfully',
     type: [Concert],
   })
-  async getAllConcerts(): Promise<Concert[]> {
-    return this.concertsService.getAllConcerts();
+  async getAllConcerts(): Promise<ConcertResopnseDto[]> {
+    const concerts = await this.concertsService.getAllConcerts();
+    return concerts.map((concert) => ({
+      id: concert.id,
+      name: concert.name,
+      description: concert.description,
+      seats: concert.seats,
+    }));
   }
 
   @Post(':concertId/reserve')
