@@ -5,6 +5,7 @@ import {
   AdminConcertList,
   AdminConcertTabs,
   ConcertStats,
+  CreateConcertForm,
 } from "../components";
 import { ConcertInfo } from "../concert-types";
 
@@ -22,6 +23,7 @@ export const AdminConcertListPage = () => {
         {activeTab === "overview" && (
           <AdminConcertList concerts={mockConcerts} />
         )}
+        {activeTab === "create" && <CreateConcertForm />}
       </div>
     </div>
   );

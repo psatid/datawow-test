@@ -19,17 +19,16 @@ AdminConcertCardProps) => {
 
   return (
     <>
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="text-xl font-medium text-blue-500 mb-4">
-              {concertName}
-            </h3>
-            <p className="text-gray-700 mb-4 leading-relaxed">{description}</p>
-            <div className="flex items-center text-gray-600">
-              <User size={16} className="mr-2" />
-              <span>{seats}</span>
-            </div>
+      <div className="bg-white p-6 rounded-lg border border-[#C2C2C2]">
+        <h3 className="text-3xl font-semibold text-[#1692EC]">{concertName}</h3>
+        <div className="w-full h-[1px] bg-[#C2C2C2] mt-6" />
+
+        <p className="text-black text-lg mt-6">{description}</p>
+
+        <div className="flex justify-between items-center mt-8">
+          <div className="flex items-center text-gray-600">
+            <User size={32} className="mr-2" />
+            <span className="text-lg text-black">{seats}</span>
           </div>
           <Button
             className="bg-[#E84E4E]"

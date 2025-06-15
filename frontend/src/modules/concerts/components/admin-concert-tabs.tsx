@@ -18,7 +18,7 @@ export const AdminConcertTabs = ({
       />
       <TabButton
         isActive={activeTab === "create"}
-        label="Overview"
+        label="Create"
         onClick={() => onTabChange("create")}
       />
     </div>
