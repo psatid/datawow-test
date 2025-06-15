@@ -46,9 +46,6 @@ export class ConcertsService {
       });
     }
 
-    const result = await this.concertRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException('Concert not found');
-    }
+    await this.concertRepository.delete(id);
   }
 }

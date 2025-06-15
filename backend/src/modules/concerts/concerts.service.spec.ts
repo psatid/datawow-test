@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ConcertsService } from './concerts.service';
 import { Concert } from './concert.entity';
 import { CreateConcertDto } from './dto/create-concert.dto';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('ConcertsService', () => {
   let service: ConcertsService;
@@ -104,26 +104,77 @@ describe('ConcertsService', () => {
   });
 
   describe('deleteConcert', () => {
-    const concertId = '1';
-
     it('should delete a concert if it exists', async () => {
+      const mockConcert = {
+        id: '1',
+        name: 'Test Concert',
+        description: 'Test Description',
+        seats: 100,
+        reservations: [],
+      };
+
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
+        mockConcert,
+      );
       (mockConcertRepository.delete as jest.Mock).mockResolvedValue({
         affected: 1,
       });
 
-      await service.deleteConcert(concertId);
+      await service.deleteConcert('1');
 
-      expect(mockConcertRepository.delete).toHaveBeenCalledWith(concertId);
+      expect(mockConcertRepository.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+        relations: ['reservations'],
+      });
+      expect(mockConcertRepository.delete).toHaveBeenCalledWith('1');
     });
 
-    it('should throw NotFoundException when concert does not exist', async () => {
-      (mockConcertRepository.delete as jest.Mock).mockResolvedValue({
-        affected: 0,
-      });
+    it('should throw NotFoundException if concert does not exist', async () => {
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.deleteConcert(concertId)).rejects.toThrow(
-        NotFoundException,
+      try {
+        await service.deleteConcert('1');
+        fail('Should have thrown NotFoundException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        const notFoundError = error as NotFoundException;
+        expect(notFoundError.getResponse()).toEqual({
+          code: 'CONCERT_NOT_FOUND',
+          message: 'Concert not found',
+        });
+      }
+    });
+
+    it('should throw BadRequestException with CONCERT_HAS_RESERVATIONS code if concert has reservations', async () => {
+      const mockConcert = {
+        id: '1',
+        name: 'Test Concert',
+        description: 'Test Description',
+        seats: 100,
+        reservations: [{ id: '1', status: 'confirmed' }],
+      };
+
+      (mockConcertRepository.findOne as jest.Mock).mockResolvedValue(
+        mockConcert,
       );
+
+      try {
+        await service.deleteConcert('1');
+        fail('Should have thrown BadRequestException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        const badRequestError = error as BadRequestException;
+        expect(badRequestError.getResponse()).toEqual({
+          code: 'CONCERT_HAS_RESERVATIONS',
+          message: 'Cannot delete concert with existing reservations',
+        });
+      }
+
+      expect(mockConcertRepository.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+        relations: ['reservations'],
+      });
+      expect(mockConcertRepository.delete).not.toHaveBeenCalled();
     });
   });
 });

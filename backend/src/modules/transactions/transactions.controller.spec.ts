@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
-import { Transaction } from './transaction.entity';
 import { TransactionType } from './transaction.entity';
 
 describe('TransactionsController', () => {
   let controller: TransactionsController;
-
-  const mockTransactionsService = {
-    getTransactionHistory: jest.fn(),
-  };
+  let mockTransactionsService: any;
 
   beforeEach(async () => {
+    mockTransactionsService = {
+      getTransactionHistory: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TransactionsController],
       providers: [
@@ -31,18 +31,19 @@ describe('TransactionsController', () => {
 
   describe('getAllTransaction', () => {
     it('should return an array of transactions', async () => {
-      const mockTransactions: Partial<Transaction>[] = [
+      const mockTransactions = [
         {
           id: '1',
+          customerEmail: 'test@example.com',
           type: TransactionType.RESERVATION_CREATED,
-          customerEmail: 'test@example.com',
+          concert: {
+            id: '1',
+            name: 'Test Concert',
+            description: 'Test Description',
+            seats: 100,
+          },
           createdAt: new Date(),
-        },
-        {
-          id: '2',
-          type: TransactionType.RESERVATION_CANCELLED,
-          customerEmail: 'test@example.com',
-          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 
@@ -51,8 +52,8 @@ describe('TransactionsController', () => {
       );
 
       const result = await controller.getAllTransaction();
-
-      expect(result).toEqual(mockTransactions);
+      expect(result[0].concertName).toBe('Test Concert');
+      expect(result[0].userEmail).toBe('test@example.com');
       expect(mockTransactionsService.getTransactionHistory).toHaveBeenCalled();
     });
 

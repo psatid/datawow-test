@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { ReservationsController } from './reservations.controller';
 import { ReservationsService } from './reservations.service';
-import { Reservation } from './reservation.entity';
+import { ReservationStatus } from './reservation.entity';
 
 describe('ReservationsController', () => {
   let controller: ReservationsController;
@@ -35,17 +35,18 @@ describe('ReservationsController', () => {
     });
 
     it('should return an array of user reservations', async () => {
-      const email = 'test@example.com';
-      const mockReservations: Partial<Reservation>[] = [
+      const userEmail = 'test@example.com';
+      const mockReservations = [
         {
           id: '1',
-          customerEmail: email,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '2',
-          customerEmail: email,
+          customerEmail: userEmail,
+          status: ReservationStatus.CONFIRMED,
+          concert: {
+            id: '1',
+            name: 'Test Concert',
+            description: 'Test Description',
+            seats: 100,
+          },
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -55,11 +56,11 @@ describe('ReservationsController', () => {
         mockReservations,
       );
 
-      const result = await controller.getUserReservations(email);
-
-      expect(result).toEqual(mockReservations);
+      const result = await controller.getUserReservations(userEmail);
+      expect(result[0].concertId).toBe('1');
+      expect(result[0].status).toBe(ReservationStatus.CONFIRMED);
       expect(mockReservationsService.getUserReservations).toHaveBeenCalledWith(
-        email,
+        userEmail,
       );
     });
 

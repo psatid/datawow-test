@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConcertsController } from './concerts.controller';
-import { ConcertsService } from './concerts.service';
-import { ReservationsService } from '../reservations/reservations.service';
-import { CreateConcertDto } from './dto/create-concert.dto';
 import {
-  CreateReservationDto,
   CancelReservationDto,
+  CreateReservationDto,
 } from '../reservations/dto/reservation.dto';
-import { Concert } from './concert.entity';
 import {
   Reservation,
   ReservationStatus,
 } from '../reservations/reservation.entity';
+import { ReservationsService } from '../reservations/reservations.service';
+import { ConcertsController } from './concerts.controller';
+import { ConcertsService } from './concerts.service';
+import { GetConcertResponseDto } from './dto/concert-resopnse.dto';
+import { CreateConcertDto } from './dto/create-concert.dto';
 
 describe('ConcertsController', () => {
   let controller: ConcertsController;
@@ -97,36 +97,165 @@ describe('ConcertsController', () => {
   describe('User Endpoints', () => {
     describe('getAllConcerts', () => {
       it('should return all concerts', async () => {
-        const mockConcerts: Concert[] = [
+        const mockConcerts = [
           {
             id: '1',
             name: 'Concert 1',
             description: 'Description 1',
             seats: 100,
-            createdAt: new Date(),
-            updatedAt: new Date(),
             reservations: [],
             transactions: [],
+            createdAt: new Date('2025-06-15T11:05:59.850Z'),
+            updatedAt: new Date('2025-06-15T11:05:59.850Z'),
           },
           {
             id: '2',
             name: 'Concert 2',
             description: 'Description 2',
             seats: 200,
-            createdAt: new Date(),
-            updatedAt: new Date(),
             reservations: [],
             transactions: [],
+            createdAt: new Date('2025-06-15T11:05:59.850Z'),
+            updatedAt: new Date('2025-06-15T11:05:59.850Z'),
           },
         ];
 
-        (mockConcertsService.getAllConcerts as jest.Mock).mockResolvedValue(
-          mockConcerts,
-        );
+        const expectedResponse: GetConcertResponseDto = {
+          concerts: mockConcerts.map((concert) => ({
+            id: concert.id,
+            name: concert.name,
+            description: concert.description,
+            seats: concert.seats,
+            availableSeats: concert.seats,
+          })),
+          totalSeats: 300,
+          totalConfirmedReservations: 0,
+          totalCancelledReservations: 0,
+        };
+
+        jest
+          .spyOn(mockConcertsService, 'getAllConcerts')
+          .mockResolvedValue(mockConcerts);
 
         const result = await controller.getAllConcerts();
 
-        expect(result).toBe(mockConcerts);
+        expect(result).toEqual(expectedResponse);
+        expect(mockConcertsService.getAllConcerts).toHaveBeenCalled();
+      });
+
+      it('should calculate stats correctly when concerts have reservations', async () => {
+        const mockConcert1 = {
+          id: '1',
+          name: 'Concert 1',
+          description: 'Description 1',
+          seats: 100,
+          reservations: [],
+          transactions: [],
+          createdAt: new Date('2025-06-15T11:05:59.850Z'),
+          updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+        };
+
+        const mockConcert2 = {
+          id: '2',
+          name: 'Concert 2',
+          description: 'Description 2',
+          seats: 200,
+          reservations: [],
+          transactions: [],
+          createdAt: new Date('2025-06-15T11:05:59.850Z'),
+          updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+        };
+
+        const mockConcerts = [
+          {
+            ...mockConcert1,
+            reservations: [
+              {
+                id: '1',
+                status: ReservationStatus.CONFIRMED,
+                customerEmail: 'test1@example.com',
+                concert: mockConcert1,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+              {
+                id: '2',
+                status: ReservationStatus.CONFIRMED,
+                customerEmail: 'test2@example.com',
+                concert: mockConcert1,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+              {
+                id: '3',
+                status: ReservationStatus.CANCELLED,
+                customerEmail: 'test3@example.com',
+                concert: mockConcert1,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+            ],
+          },
+          {
+            ...mockConcert2,
+            reservations: [
+              {
+                id: '4',
+                status: ReservationStatus.CONFIRMED,
+                customerEmail: 'test4@example.com',
+                concert: mockConcert2,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+              {
+                id: '5',
+                status: ReservationStatus.CANCELLED,
+                customerEmail: 'test5@example.com',
+                concert: mockConcert2,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+              {
+                id: '6',
+                status: ReservationStatus.CANCELLED,
+                customerEmail: 'test6@example.com',
+                concert: mockConcert2,
+                createdAt: new Date('2025-06-15T11:05:59.850Z'),
+                updatedAt: new Date('2025-06-15T11:05:59.850Z'),
+              },
+            ],
+          },
+        ];
+
+        const expectedResponse: GetConcertResponseDto = {
+          concerts: [
+            {
+              id: '1',
+              name: 'Concert 1',
+              description: 'Description 1',
+              seats: 100,
+              availableSeats: 98, // 100 seats - 2 confirmed reservations
+            },
+            {
+              id: '2',
+              name: 'Concert 2',
+              description: 'Description 2',
+              seats: 200,
+              availableSeats: 199, // 200 seats - 1 confirmed reservation
+            },
+          ],
+          totalSeats: 300, // 100 + 200
+          totalConfirmedReservations: 3, // 2 + 1
+          totalCancelledReservations: 3, // 1 + 2
+        };
+
+        jest
+          .spyOn(mockConcertsService, 'getAllConcerts')
+          .mockResolvedValue(mockConcerts);
+
+        const result = await controller.getAllConcerts();
+
+        expect(result).toEqual(expectedResponse);
         expect(mockConcertsService.getAllConcerts).toHaveBeenCalled();
       });
     });
