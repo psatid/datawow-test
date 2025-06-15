@@ -23,7 +23,8 @@ import {
   CancelReservationDto,
 } from '../reservations/dto/reservation.dto';
 import { Reservation } from '../reservations/reservation.entity';
-import { ConcertResopnseDto } from './dto/concert-resopnse.dto';
+import { GetConcertResponseDto } from './dto/concert-resopnse.dto';
+import { mapConcertEntityToGetConcertResponseDto } from './concerts.mapper';
 
 @ApiTags('Concerts')
 @Controller('concerts')
@@ -73,16 +74,11 @@ export class ConcertsController {
   @ApiResponse({
     status: 200,
     description: 'List of concerts retrieved successfully',
-    type: [ConcertResopnseDto],
+    type: [GetConcertResponseDto],
   })
-  async getAllConcerts(): Promise<ConcertResopnseDto[]> {
+  async getAllConcerts(): Promise<GetConcertResponseDto> {
     const concerts = await this.concertsService.getAllConcerts();
-    return concerts.map((concert) => ({
-      id: concert.id,
-      name: concert.name,
-      description: concert.description,
-      seats: concert.seats,
-    }));
+    return mapConcertEntityToGetConcertResponseDto(concerts);
   }
 
   @Post(':concertId/reserve')

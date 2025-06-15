@@ -10,8 +10,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Concert } from '../concerts/concert.entity';
 
 export enum ReservationStatus {
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',
 }
 
 @Entity()

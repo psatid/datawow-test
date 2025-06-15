@@ -3,14 +3,19 @@ import axios from "axios";
 const CONCERT_API_BASE_URL = `${process.env.NEXT_PUBLIC_API_DOMAIN}/v1/concerts`;
 
 type GetConcertsResponse = {
-  id: string;
-  name: string;
-  description: string;
-  seats: number;
+  concerts: {
+    id: string;
+    name: string;
+    description: string;
+    seats: number;
+  }[];
+  totalSeats: number;
+  totalConfirmedReservations: number;
+  totalCancelledReservations: number;
 };
 
 export const getConcerts = async () => {
-  const response = await axios.get<GetConcertsResponse[]>(CONCERT_API_BASE_URL);
+  const response = await axios.get<GetConcertsResponse>(CONCERT_API_BASE_URL);
   return response.data;
 };
 
