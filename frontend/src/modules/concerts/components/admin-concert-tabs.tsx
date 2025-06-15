@@ -35,8 +35,8 @@ const TabButton = ({ isActive, label, onClick }: TabButtonProps) => {
   return (
     <button
       className={cn(
-        "px-4 py-2 text-gray-600 hover:text-gray-900 cursor-pointer",
-        isActive && "text-blue-500 border-b-2 border-blue-500 font-medium"
+        "px-4 py-2 text-gray-600 cursor-pointer",
+        isActive && "text-blue border-b-2 border-blue font-semibold"
       )}
       onClick={onClick}
     >

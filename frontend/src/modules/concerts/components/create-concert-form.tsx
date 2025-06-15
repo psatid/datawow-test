@@ -20,11 +20,6 @@ export const CreateConcertForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!concertName || !totalSeats || !description) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
     createConcert({
       name: concertName,
       description,

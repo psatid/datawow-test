@@ -45,6 +45,11 @@ export const useCreateConcert = ({
       });
     },
     onError: (error: Error) => {
+      if (isAxiosError(error)) {
+        const errorResponse = error.response;
+        alert(`Error creating concert: ${errorResponse?.data.message}`);
+        return;
+      }
       alert(`Error creating concert: ${error.message}`);
     },
   });
@@ -76,8 +81,8 @@ export const useDeleteConcert = ({
           alert("Cannot delete concert with existing reservations.");
           return;
         }
+        alert(`Error deleting concert: ${errorResponse?.data.message}`);
       }
-
       alert(`Error deleting concert: ${error.message}`);
     },
   });
@@ -123,6 +128,7 @@ export const useReserveConcert = (concertId: string) => {
           alert("Concert is fully booked.");
           return;
         }
+        alert(`Error deleting concert: ${errorResponse?.data.message}`);
       }
       alert(`Error reserving concert: ${error.message}`);
     },
@@ -143,6 +149,11 @@ export const useCancelConcertReservation = (concertId: string) => {
       });
     },
     onError: (error) => {
+      if (isAxiosError(error)) {
+        const errorResponse = error.response;
+        alert(`Error cancelling reservation: ${errorResponse?.data.message}`);
+        return;
+      }
       alert(`Error cancelling reservation: ${error.message}`);
     },
   });
