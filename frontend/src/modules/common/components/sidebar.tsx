@@ -1,4 +1,5 @@
 import { LogOut, LucideProps } from "lucide-react";
+import Link from "next/link";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 
 export type TSidebarItem = {
@@ -6,7 +7,8 @@ export type TSidebarItem = {
   Icon: ForwardRefExoticComponent<
     Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
   >;
-  href: string;
+  href?: string;
+  onClick?: () => void;
 };
 
 interface SidebarProps {
@@ -28,15 +30,29 @@ export const Sidebar = ({ title, sidebarItems }: SidebarProps) => {
           ))}
         </nav>
 
-        <SidebarItem Icon={LogOut} label="Logout" href="/logout" />
+        <SidebarItem Icon={LogOut} label="Logout" />
       </div>
     </div>
   );
 };
 
-export const SidebarItem = ({ Icon, label }: TSidebarItem) => {
+export const SidebarItem = ({ Icon, label, href, onClick }: TSidebarItem) => {
+  if (href) {
+    return (
+      <Link href={href}>
+        <div className="flex items-center space-x-3 py-4 px-2 hover:bg-[#EAF5F9] rounded-lg cursor-pointer">
+          <Icon size={24} />
+          <span>{label}</span>
+        </div>
+      </Link>
+    );
+  }
   return (
-    <div className="flex items-center space-x-3 py-4 px-2 hover:bg-[#EAF5F9] rounded-lg cursor-pointer">
+    <div
+      role={onClick ? "button" : undefined}
+      onClick={onClick}
+      className="flex items-center space-x-3 py-4 px-2 hover:bg-[#EAF5F9] rounded-lg cursor-pointer"
+    >
       <Icon size={24} />
       <span>{label}</span>
     </div>

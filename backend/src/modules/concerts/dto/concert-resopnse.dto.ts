@@ -1,6 +1,6 @@
-export type ConcertResopnseDto = {
+export class ConcertResopnseDto {
   id: string;
   name: string;
   description: string;
   seats: number;
-};
+}

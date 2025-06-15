@@ -73,7 +73,7 @@ export class ConcertsController {
   @ApiResponse({
     status: 200,
     description: 'List of concerts retrieved successfully',
-    type: [Concert],
+    type: [ConcertResopnseDto],
   })
   async getAllConcerts(): Promise<ConcertResopnseDto[]> {
     const concerts = await this.concertsService.getAllConcerts();

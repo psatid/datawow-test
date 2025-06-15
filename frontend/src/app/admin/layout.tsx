@@ -5,7 +5,7 @@ const SIDEBAR_ITEMS: TSidebarItem[] = [
   {
     label: "Home",
     Icon: Home,
-    href: "/admin",
+    href: "/admin/home",
   },
   {
     label: "History",
