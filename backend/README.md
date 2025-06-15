@@ -28,6 +28,71 @@ src/
 └── migrations/      # Database migrations
 ```
 
+## Database Schema
+
+The application uses PostgreSQL with TypeORM and consists of three main entities with the following relationships:
+
+```mermaid
+erDiagram
+    CONCERT {
+        uuid id PK
+        string name
+        string description
+        number seats
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    RESERVATION {
+        uuid id PK
+        string customerEmail
+        enum status
+        uuid concertId FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    TRANSACTION {
+        uuid id PK
+        enum type
+        string customerEmail
+        uuid concertId FK
+        timestamp createdAt
+    }
+
+    CONCERT ||--o{ RESERVATION : "has many"
+    CONCERT ||--o{ TRANSACTION : "has many"
+```
+
+### Entities
+
+1. **Concert**
+
+   - `id` (UUID, Primary Key)
+   - `name` (String)
+   - `description` (String)
+   - `seats` (Number)
+   - `createdAt` (Timestamp)
+   - `updatedAt` (Timestamp)
+   - Has many Reservations
+   - Has many Transactions
+
+2. **Reservation**
+
+   - `id` (UUID, Primary Key)
+   - `customerEmail` (String)
+   - `status` (Enum: 'confirmed' | 'cancelled')
+   - `createdAt` (Timestamp)
+   - `updatedAt` (Timestamp)
+   - Belongs to one Concert
+
+3. **Transaction**
+   - `id` (UUID, Primary Key)
+   - `type` (Enum: 'reservation_created' | 'reservation_cancelled')
+   - `customerEmail` (String)
+   - `createdAt` (Timestamp)
+   - Belongs to one Concert
+
 ## Prerequisites
 
 - [nvm (Node Version Manager)](https://github.com/nvm-sh/nvm#installing-and-updating)
